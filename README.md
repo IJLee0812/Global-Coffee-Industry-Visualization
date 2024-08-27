@@ -2,9 +2,11 @@
 
 ### ☕️Global Coffee Industy Analysis Visualization
 
-     This is a project built using streamlit to analyze coffee industry data from 1990 to 2019. This visualization tool allows you to explore different aspects of the global coffee industry.
+     This is a project built using streamlit to analyze coffee industry data from 1990 to 2019. 
+     
+     In website, visualization tool allows you to explore different aspects of the global coffee industry.
 
-     Enjoy Your ~~~☕️Coffee☕️~~~
+     Enjoy Your ~☕️Coffee☕️~ ! ^_^
 
 <br>
 
