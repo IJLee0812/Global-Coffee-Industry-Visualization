@@ -8,6 +8,7 @@ st.set_page_config(page_title="커피 데이터 시각화", page_icon="☕", lay
 # 배경 이미지 추가
 st.image("./image/bg.jpg", use_column_width=True)
 
+
 # 데이터 로드 및 전처리 함수들
 @st.cache_data
 def load_production_data():
@@ -85,7 +86,7 @@ color_schemes = {
 }
 
 # 그래프 생성 함수
-def create_graph(data, x, y, title, color_scheme, show_values):
+def create_bar_graph(data, x, y, title, color_scheme, show_values):
     fig = px.bar(
         data, 
         x=x, 
@@ -121,26 +122,80 @@ def create_graph(data, x, y, title, color_scheme, show_values):
 
     return fig
 
+def create_line_graph(data, country, title):
+    years = [str(year) for year in range(1990, 2020)]
+    country_data = data[data['Country'] == country]
+    if dataset == "생산량":
+        y_data = country_data[years].iloc[0].values
+    else:
+        y_data = country_data[years].sum(axis=0).values
+
+    fig = px.line(
+        x=years, 
+        y=y_data,
+        title=f"{country}의 {title}",
+        labels={'x': '년도', 'y': '수치'},
+        template='plotly_white'
+    )
+
+    fig.update_layout(
+        xaxis_title="년도",
+        yaxis_title="수치",
+        font=dict(family="Arial", size=12),
+        plot_bgcolor='rgba(0,0,0,0)',
+        height=600
+    )
+
+    return fig
+
+st.markdown("<br><br>", unsafe_allow_html=True)
+
 # 데이터 로드 및 그래프 생성
 if dataset == "생산량":
+    st.subheader("상위 20개 커피 생산국 데이터 그래프")
     data = load_production_data()
-    fig = create_graph(data, 'Country', 'Total_Production', '상위 20개 커피 생산국', color_scheme, show_values)
+    fig = create_bar_graph(data, 'Country', 'Total_Production', '상위 20개 커피 생산국', color_scheme, show_values)
 elif dataset == "수입량":
+    st.subheader("상위 20개 커피 수입국 데이터 그래프")
     data = load_import_data()
-    fig = create_graph(data, 'Country', 'Total_import', '상위 20개 커피 수입국', color_scheme, show_values)
+    fig = create_bar_graph(data, 'Country', 'Total_import', '상위 20개 커피 수입국', color_scheme, show_values)
 elif dataset == "수출량":
+    st.subheader("상위 20개 커피 수출국 데이터 그래프")
     data = load_export_data()
-    fig = create_graph(data, 'Country', 'Total_export', '상위 20개 커피 수출국', color_scheme, show_values)
+    fig = create_bar_graph(data, 'Country', 'Total_export', '상위 20개 커피 수출국', color_scheme, show_values)
 else:  # 소비량
+    st.subheader("상위 20개 커피 소비국 데이터 그래프")
     data = load_consumption_data()
-    fig = create_graph(data, 'Country', 'Total_import_consumption', '상위 20개 커피 소비국', color_scheme, show_values)
+    fig = create_bar_graph(data, 'Country', 'Total_import_consumption', '상위 20개 커피 소비국', color_scheme, show_values)
 
 # 그래프 표시
 st.plotly_chart(fig, use_container_width=True)
 
+st.markdown("<br><br>", unsafe_allow_html=True)
+
+# 국가 선택
+st.subheader("국가별 시계열 데이터 그래프")
+selected_country = st.selectbox("국가 선택", data['Country'])
+
+# 시계열 그래프 생성 및 표시
+if dataset == "생산량":
+    line_fig = create_line_graph(data, selected_country, "생산량 시계열 데이터")
+elif dataset == "수입량":
+    line_fig = create_line_graph(data, selected_country, "수입량 시계열 데이터")
+elif dataset == "수출량":
+    line_fig = create_line_graph(data, selected_country, "수출량 시계열 데이터")
+else:  # 소비량
+    line_fig = create_line_graph(data, selected_country, "소비량 시계열 데이터")
+
+st.plotly_chart(line_fig, use_container_width=True)
+
+st.markdown("<br><br>", unsafe_allow_html=True)
+
 # 데이터 테이블 표시
-st.subheader("데이터 테이블")
+st.subheader("원본 데이터 테이블")
 st.dataframe(data.style.background_gradient(cmap='YlOrRd', subset=[data.columns[-1]]))
+
+st.markdown("<br><br>", unsafe_allow_html=True)
 
 # 데이터셋 별 추가 정보
 if dataset == "생산량":
@@ -148,41 +203,53 @@ if dataset == "생산량":
     ### 생산 데이터에 대하여
     이 시각화는 상위 20개 커피 생산국과 그들의 커피 종류별 생산량(아라비카, 로부스타 또는 혼합)을 보여줍니다.
 
+    <br>
+
     ### 인사이트
     - 브라질은 가장 큰 커피 생산국이며 다른 나라들보다 현저히 앞서 있습니다.
     - 상위 생산국 대부분은 아라비카 커피에 집중하고 있습니다.
     - 베트남은 상위 국가 중 가장 큰 로부스타 생산국으로 주목받고 있습니다.
-    """)
+    """, unsafe_allow_html=True)
 elif dataset == "수입량":
     st.markdown("""
     ### 수입 데이터에 대하여
     이 시각화는 상위 20개 커피 수입국과 그들의 수입량을 보여줍니다.
 
+    <br>
+
     ### 인사이트
     - 미국은 가장 큰 커피 수입국으로, 다른 국가들보다 현저히 앞서 있습니다.
     - 독일, 이탈리아, 프랑스와 같은 유럽 국가들이 주요 커피 수입국입니다.
     - 일본은 아시아에서 주요 커피 수입국으로 두드러집니다.
-    """)
+    """, unsafe_allow_html=True)
 elif dataset == "수출량":
     st.markdown("""
     ### 수출 데이터에 대하여
     이 시각화는 상위 20개 커피 수출국과 그들의 수출량을 보여줍니다.
 
+    <br>
+
     ### 인사이트
     - 브라질은 가장 큰 커피 수출국으로, 다른 국가들보다 현저히 앞서 있습니다.
     - 베트남과 콜롬비아도 주요 커피 수출국입니다.
     - 에티오피아와 우간다와 같은 몇몇 아프리카 국가들이 상위 20개 리스트에 두드러집니다.
-    """)
+    """, unsafe_allow_html=True)
 else:  # 소비량
     st.markdown("""
     ### 소비 데이터에 대하여
     이 시각화는 커피 수입 소비량 기준 상위 20개 국가와 그들의 소비량을 보여줍니다.
+
+    <br>
 
     ### 인사이트
     - 미국이 커피 수입 소비량에서 다른 국가들보다 현저히 앞서 있습니다.
     - 독일, 이탈리아, 프랑스와 같은 유럽 국가들이 주요 커피 소비국입니다.
     - 일본은 아시아에서 주요 커피 소비국으로 두드러집니다.
     - 이 데이터는 이러한 국가들의 인구 규모와 커피 음용 문화를 반영합니다.
-    """)
+    """, unsafe_allow_html=True)
 
 st.markdown("전 세계 커피 무역, 생산 및 소비에 대한 추가 정보를 원하시면 [국제 커피 기구](https://www.ico.org/)를 방문하세요.")
+
+# 푸터
+st.markdown("---")
+st.markdown("Created with ❤️ using Streamlit and Plotly")
